@@ -1,0 +1,5 @@
+# spi_bootstrap extension
+comment = 'search for an element in an array using binary search'
+default_version = '1.0'
+module_pathname = '$libdir/spi_bootstrap'
+relocatable = true
