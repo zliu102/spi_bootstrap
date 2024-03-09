@@ -62,201 +62,26 @@
 
 PG_MODULE_MAGIC;
 
-typedef struct state_c
-{
-	ArrayType *reservoir;
-        int32 poscnt;
-        int32 reservoir_size; 
-} state_c;
+typedef struct {
+    int l_suppkey;
+    int l_returnflag_int;
+    float4 *quantities;
+    int count;
+    int capacity;
+} Group;
 
-#define MAX_GROUPS 787
-#define RES_SIZE 100
+typedef struct {
+    Group *groups;
+    int numGroups;
+    int capacity;
+} GroupsContext;
+
+// Utility function declarations
 static void prepTuplestoreResult(FunctionCallInfo fcinfo);
+static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int);
+static void addQuantityToGroup(Group *group, float4 quantity);
+static float4 calculateRandomSampleAverage(float4 *quantities, int count);
 
-
-//static bool initialized = false;
-//static int lastgroup = -1;
-//static state_c **states = NULL;
-//static state_c *states_2[MAX_GROUPS];
-//static int poscounts[MAX_GROUPS];
-//static int64 *results = NULL;
-//static int64 results[MAX_GROUPS][RES_SIZE] = {0};
-
-
-/*
-PG_FUNCTION_INFO_V1(res_trans_crimes_spi);
-Datum
-res_trans_crimes_spi(PG_FUNCTION_ARGS)
-{
-    
-    //bytea  *addr = (bytea *) PG_GETARG_BYTEA_P(0);
-    //elog(INFO, "addr is %p",addr);
-    int64 lastgroup = PG_GETARG_INT64(0);
-    int64 group_index = PG_GETARG_INT64(1);
-    int64 newsample = PG_GETARG_INT64(2);
-    //elog(INFO, "lastgroup is %ld",lastgroup);
-    //elog(INFO, "group_index is %ld",group_index);
-    //elog(INFO, "newsample is %ld",newsample);   
-    //state_c *s = palloc (sizeof(state_c));
-    //if (states == NULL) {
-     //   states = (state_c **) palloc0(MAX_GROUPS * sizeof(state_c *));
-      //  elog(INFO, "states is %p",states); 
-    //}
-    if (!initialized) {
-        
-        for (int i = 0;i<MAX_GROUPS;i++){
-            states_2[i]= (state_c *) palloc0(sizeof(state_c));
-            poscounts[i] = 1;
-            
-            
-        }
-        //elog(INFO, "states_2 is %p",states_2); 
-        //elog(INFO, "poscounts is %p",poscounts); 
-        initialized = true;
-        //elog(INFO, "states_2 is %p",states_2); 
-    }
-
-        int poscnt = poscounts[group_index - 1];
-        //elog(INFO, "poscnt is %d",poscnt);//0 - postcnt -1
-        if(poscnt <= RES_SIZE){
-            //elog(INFO, "case 1");
-            results[group_index-1][poscnt - 1] = newsample;
-            
-            poscounts[group_index - 1] ++;
-        }else{
-           // elog(INFO, "case 2");
-            int32 pos = rand() % poscnt;
-            //elog(INFO, "pos is %d",pos);//0 - postcnt -1
-            if(pos < RES_SIZE){
-                results[group_index-1][pos] = newsample;
-            }
-            poscounts[group_index - 1] ++;
-        }
-       
-        PG_RETURN_INT64(group_index);
-}
-
-PG_FUNCTION_INFO_V1(finalize_trans_crimes_spi);
-Datum
-finalize_trans_crimes_spi(PG_FUNCTION_ARGS)
-{               
-
-                ArrayType *result;
-                Datum *elems;
-                int i;
-                //int num;
-                //int64 *dr;
-
-                //state_c *st = palloc (sizeof(state_c));
-                //bytea  *addr = (bytea *) PG_GETARG_BYTEA_P(0);
-                //void **new_ptr = (void **) VARDATA(addr);
-                int64 group_index = PG_GETARG_INT64(0);
-                //elog(INFO, "group_index is %ld",group_index);
-                //st= (state_c *) states[group_index - 1];
-                //state_c *st= (state_c *) states_2[group_index - 1];
-                //elog(INFO, "inner_array 0,1,2 is %ld,%ld,%ld",results[group_index-1][0],results[group_index-1][1],results[group_index-1][2]);
-                //elog(INFO, "st is %p",st);
-                //elog(INFO, "st poscnt is %d,reservoir_size is %d",st->poscnt,st->reservoir_size);
-                //num = st->reservoir_size;
-                //dr = (int64 *) ARR_DATA_PTR(st->reservoir); 
-                
-                elems = (Datum *)palloc(RES_SIZE * sizeof(Datum));
-                
-                for (i = 0; i < RES_SIZE; i++) {
-                    elems[i] = Int64GetDatum(results[group_index-1][i]); 
-                    //elog(INFO, "dr[%d] is %ld",i,dr[i]);
-                    //elog(INFO, "elems[%d] is %ld",i,elems[i]);
-                }
-                //int nbytes = ARR_OVERHEAD_NONULLS(1) + sizeof(int) * num;
-                //result = (ArrayType *) palloc0(nbytes);
-                
-                result = construct_array((Datum *)elems, RES_SIZE , INT8OID, sizeof(int64), true, 'i');
-                
-                //pfree(addr);
-                //initialized = false;
-                //elog(INFO, "before retrun initialized is %d",initialized);
-                initialized = false;
-                PG_RETURN_ARRAYTYPE_P(result);
-                //PG_RETURN_ARRAYTYPE_P(st->reservoir); 
-}
-
-PG_FUNCTION_INFO_V1(spi_test2);
-Datum
-spi_test2(PG_FUNCTION_ARGS)
-{
-    // elog(NOTICE, "range_window: start.");
-
-    int ret;
-    int row;
-    Tuplestorestate *tupstore;
-    TupleDesc tupdesc;
-    MemoryContext oldcontext;
-   
-    prepTuplestoreResult(fcinfo);
-
-    // elog(NOTICE, "range_window: preped result.");
-
-    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-
-    if ((ret = SPI_connect()) < 0)
-    
-        elog(ERROR, "range_window: SPI_connect returned %d", ret);
-
-    // elog(NOTICE, "range_window: SPI connected.");
-    char        sql[8192];
-   // snprintf(sql, sizeof(sql),"SELECT b, c, a FROM (SELECT b, c, a, ROW_NUMBER() OVER (PARTITION BY b, c ORDER BY random()) AS rn FROM test2) t WHERE rn <= 3 ORDER BY b, c, a;");
-    snprintf(sql, sizeof(sql),"SELECT beat, ward, array_agg(zip_codes ORDER BY 1) AS random_zip_codes FROM (SELECT beat, ward, zip_codes, ROW_NUMBER() OVER (PARTITION BY beat, ward ORDER BY random()) AS rn FROM crimes1) t WHERE rn <= 100 GROUP BY beat, ward;");
-    // elog(NOTICE, "range_window: SPI query -- %s", sql);
-
-    ret = SPI_execute(sql, true, 0);
-
-    if (ret < 0)
-     
-        elog(ERROR, "range_window: SPI_exec returned %d", ret);
-
-    // elog(NOTICE, "range_window: number of tuples -- %d", (int)SPI_processed);
-
-    //tuple store
-   
-
-   
-
-    //tupdesc = CreateTemplateTupleDesc(1);
-    tupdesc = SPI_tuptable->tupdesc;
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "beat", INT8OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "ward", INT8OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "zip_codes", INT8OID, -1, 0);
-    oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-    tupstore = tuplestore_begin_heap(true, false, work_mem);
-    rsinfo->setResult = tupstore;
-    tupdesc = CreateTupleDescCopy(SPI_tuptable->tupdesc);
-    rsinfo->setDesc = tupdesc;
-    MemoryContextSwitchTo(oldcontext);
-
-
-
-  
-    for(row = 0; row < SPI_processed; row++){
-        HeapTuple tuple;
-        //HeapTuple tuplec;
-        //elog(NOTICE, "range_window: row %d", row);
-        tuple = SPI_copytuple((SPI_tuptable->vals)[row]);
-       //tuplec = SPI_copytuple((SPI_tuptable->vals)[row]);
-
-        tuplestore_puttuple(tupstore, tuple);
-
-        
-    }
- 
-   
-
-   
-    tuplestore_donestoring(tupstore);
-
-    SPI_finish();
-
-    PG_RETURN_NULL();
-}*/
 
 static void
 prepTuplestoreResult(FunctionCallInfo fcinfo)
@@ -280,6 +105,135 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
     rsinfo->setResult = NULL;
     rsinfo->setDesc = NULL;
 }
+// 寻找或创建新的分组
+static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int) {
+    // 搜索现有分组
+    for (int i = 0; i < context->numGroups; ++i) {
+        if (context->groups[i].l_suppkey == l_suppkey && context->groups[i].l_returnflag_int == l_returnflag_int) {
+            return &context->groups[i];
+        }
+    }
+
+    // 需要创建新分组
+    if (context->numGroups >= context->capacity) {
+        // 动态扩容
+        context->capacity *= 2;
+        context->groups = (Group *) repalloc(context->groups, sizeof(Group) * context->capacity);
+    }
+
+    Group *newGroup = &context->groups[context->numGroups++];
+    newGroup->l_suppkey = l_suppkey;
+    newGroup->l_returnflag_int = l_returnflag_int;
+    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 100); // 初始容量
+    newGroup->count = 0;
+    newGroup->capacity = 100;
+
+    return newGroup;
+}
+
+// 向分组添加数量
+static void addQuantityToGroup(Group *group, float4 quantity) {
+    if (group->count >= group->capacity) {
+        // 动态扩容
+        group->capacity *= 2;
+        group->quantities = (float4 *) repalloc(group->quantities, sizeof(float4) * group->capacity);
+    }
+    group->quantities[group->count++] = quantity;
+}
+
+// 从分组中随机抽样并计算平均值
+static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
+    int sampleSize = 1000 < count ? 1000 : count;
+    float4 sum = 0;
+
+    for (int i = 0; i < sampleSize; ++i) {
+        int idx = rand() % count; // 注意：对于非常大的数量，这里可能需要更好的随机数生成方法
+        sum += quantities[idx];
+    }
+
+    return sampleSize > 0 ? sum / sampleSize : 0;
+}
+
+
+
+PG_FUNCTION_INFO_V1(spi_bootstrap2);
+
+Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
+    // Connect to SPI
+    if (SPI_connect() != SPI_OK_CONNECT) {
+        ereport(ERROR, (errmsg("SPI_connect failed")));
+    }
+
+    // Prepare and execute the SQL query
+    char sql[1024];
+    snprintf(sql, sizeof(sql), "SELECT l_suppkey, l_returnflag_int, L_QUANTITY FROM your_table ORDER BY l_suppkey, l_returnflag_int");
+    int ret = SPI_execute(sql, true, 0);
+    if (ret != SPI_OK_SELECT) {
+        SPI_finish();
+        ereport(ERROR, (errmsg("SPI_execute failed")));
+    }
+
+    // Prepare for tuplestore use
+    TupleDesc tupdesc = CreateTemplateTupleDesc(3, false);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_quantity", FLOAT8OID, -1, 0);
+    MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
+    Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
+    MemoryContextSwitchTo(oldcontext);
+
+    // Initialize GroupsContext
+    GroupsContext groupsContext;
+    groupsContext.groups = (Group *)palloc(sizeof(Group) * 10); // Initial capacity
+    groupsContext.numGroups = 0;
+    groupsContext.capacity = 10;
+
+    // Process SPI results
+    for (int i = 0; i < SPI_processed; i++) {
+        HeapTuple tuple = SPI_tuptable->vals[i];
+        TupleDesc tupdesc = SPI_tuptable->tupdesc;
+
+        int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
+        int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
+        int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
+
+        Group *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
+        addQuantityToGroup(group, quantity);
+    }
+
+    // Process each group: calculate random sample average and store results
+    srand(time(NULL)); // Initialize random seed
+    for (int i = 0; i < groupsContext.numGroups; i++) {
+        Group *group = &groupsContext.groups[i];
+        float8 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
+
+        Datum values[3];
+        bool nulls[3] = {false, false, false};
+
+        values[0] = Int32GetDatum(group->l_suppkey);
+        values[1] = Int32GetDatum(group->l_returnflag_int);
+        values[2] = Float8GetDatum(avg_quantity);
+
+        tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+    }
+
+    // Cleanup
+    SPI_finish();
+    tuplestore_donestoring(tupstore);
+
+    // Set up to return the tuplestore as a set
+    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+    rsinfo->setResult = tupstore;
+    rsinfo->setDesc = tupdesc;
+    rsinfo->returnMode = SFRM_Materialize;
+
+    PG_RETURN_NULL();
+}
+
+// Definitions of utility functions...
+
+
+
 
 PG_FUNCTION_INFO_V1(spi_bootstrap);
 Datum

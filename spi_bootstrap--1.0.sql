@@ -41,6 +41,11 @@ AS 'MODULE_PATHNAME','spi_bootstrap'
 LANGUAGE C STRICT;
 
 
+CREATE FUNCTION spi_bootstrap2(sampleSize bigint, tablename text, otherAttribue text,groupby text) 
+RETURNS TABLE (l_suppkey int, l_returnflag_int int, avg_l_quantity float8) 
+AS 'MODULE_PATHNAME','spi_bootstrap' 
+LANGUAGE C STRICT;
+
 /*
 
 
