@@ -108,7 +108,8 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
 // 寻找或创建新的分组
 static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int) {
     // 搜索现有分组
-    for (int i = 0; i < context->numGroups; ++i) {
+    int i;
+    for (i = 0; i < context->numGroups; ++i) {
         if (context->groups[i].l_suppkey == l_suppkey && context->groups[i].l_returnflag_int == l_returnflag_int) {
             return &context->groups[i];
         }
@@ -145,8 +146,8 @@ static void addQuantityToGroup(Group *group, float4 quantity) {
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
     int sampleSize = 1000 < count ? 1000 : count;
     float4 sum = 0;
-
-    for (int i = 0; i < sampleSize; ++i) {
+    int i;
+    for (i = 0; i < sampleSize; ++i) {
         int idx = rand() % count; // 注意：对于非常大的数量，这里可能需要更好的随机数生成方法
         sum += quantities[idx];
     }
@@ -189,7 +190,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     groupsContext.capacity = 10;
 
     // Process SPI results
-    for (int i = 0; i < SPI_processed; i++) {
+    int i;
+    for (i = 0; i < SPI_processed; i++) {
         HeapTuple tuple = SPI_tuptable->vals[i];
         TupleDesc tupdesc = SPI_tuptable->tupdesc;
 
@@ -203,8 +205,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
     // Process each group: calculate random sample average and store results
     srand(time(NULL)); // Initialize random seed
-    for (int i = 0; i < groupsContext.numGroups; i++) {
-        Group *group = &groupsContext.groups[i];
+    int j;
+    for (j = 0; j < groupsContext.numGroups; j++) {
+        Group *group = &groupsContext.groups[j];
         float8 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
         Datum values[3];
