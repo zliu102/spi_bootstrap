@@ -237,7 +237,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
 
 
-
+/*
 PG_FUNCTION_INFO_V1(spi_bootstrap);
 Datum
 spi_bootstrap(PG_FUNCTION_ARGS)
@@ -347,23 +347,6 @@ spi_bootstrap(PG_FUNCTION_ARGS)
 
         
 
-        //elog(INFO, "range_window: row %d,current_group %s,last_group %s ",row, current_group,last_group);
-        /*
-        bool isnull;
-        int a = SPI_getbinval((SPI_tuptable->vals)[row], SPI_tuptable->tupdesc, attnum3, &isnull);
-        
-        a_values[0] = 0;
-        a_values[1] = 0;
-        Datum values[3];
-        bool nulls[3] = { false, false, false };
-        elog(INFO, "value: a %d, b %d, c %d",a, b, c);
-        values[0] = Int32GetDatum(a);
-        values[1] = Int32GetDatum(b);
-        values[2] = Int32GetDatum(c);
-        HeapTuple tuple = heap_form_tuple(tupdesc, values, nulls);*/
-        //elog(INFO, "New tuple: %s", heap_tuple_to_string(tuple, tupdesc));
-        //HeapTuple tuple = SPI_copytuple((SPI_tuptable->vals)[row]);
-        //reservoir[0] = tuple;
 
     }
     int j;
@@ -384,4 +367,4 @@ spi_bootstrap(PG_FUNCTION_ARGS)
     //PG_RETURN_ARRAYTYPE_P(a_values);
     PG_RETURN_NULL();
 }
-
+*/

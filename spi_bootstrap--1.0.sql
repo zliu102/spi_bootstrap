@@ -35,11 +35,12 @@ RETURNS TABLE (l_suppkey int, l_returnflag_int int, l_tax numeric, l_quantity in
 AS 'MODULE_PATHNAME','reservoir_sampler_tpch' 
 LANGUAGE C STRICT;
 */
+/*
 CREATE FUNCTION spi_bootstrap(sampleSize bigint, tablename text, otherAttribue text,groupby text) 
 RETURNS TABLE (l_suppkey int, l_returnflag_int int, l_quantity int) 
 AS 'MODULE_PATHNAME','spi_bootstrap' 
 LANGUAGE C STRICT;
-
+*/
 
 CREATE FUNCTION spi_bootstrap2(sampleSize bigint, tablename text, otherAttribue text,groupby text) 
 RETURNS TABLE (l_suppkey int, l_returnflag_int int, avg_l_quantity float8) 
