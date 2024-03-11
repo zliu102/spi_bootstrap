@@ -200,11 +200,14 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     for (i = 0; i < SPI_processed; i++) {
         HeapTuple tuple = SPI_tuptable->vals[i];
         TupleDesc tupdesc = SPI_tuptable->tupdesc;
-        elog(INFO, "SPI current id is -- %s", sql);
+        elog(INFO, "SPI current id is -- %d", i);
         int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
         int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
         int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
-        elog(INFO, "current id is2 -- %d", i);
+        elog(INFO, "SPI l_suppkey -- %d", l_suppkey);
+        elog(INFO, "SPI l_returnflag_int -- %d", l_returnflag_int);
+        elog(INFO, "SPI quantity -- %d", quantity);
+      
 
 
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
