@@ -167,7 +167,12 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
     // Prepare and execute the SQL query
     char sql[1024];
-    snprintf(sql, sizeof(sql), "SELECT l_suppkey, l_returnflag_int, L_QUANTITY FROM your_table ORDER BY l_suppkey, l_returnflag_int");
+    char* sampleSize = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    char* tablename = text_to_cstring(PG_GETARG_TEXT_PP(1));
+    char* otherAttribue = text_to_cstring(PG_GETARG_TEXT_PP(2));
+    char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
+
+    snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s')",sampleSize,tablename,otherAttribue,groupby);
     int ret = SPI_execute(sql, true, 0);
     if (ret != SPI_OK_SELECT) {
         SPI_finish();
