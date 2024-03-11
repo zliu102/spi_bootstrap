@@ -261,19 +261,19 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         elog(INFO, "l_returnflag_int is %d",values[1]);
         elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
         */
-        Datum values[3]; // 假设我们的tuplestore预期有三列
-        bool nulls[3] = {false, false, false}; // 假设这些列的值都不是NULL
-
-        // 为简化，我们使用固定的值填充这一行数据
-        values[0] = Int32GetDatum(1); // 假设第一列是int4类型，并设其值为1
-        values[1] = Int32GetDatum(2); // 假设第二列是int4类型，并设其值为2
-        values[2] = Float4GetDatum(3.14); // 假设第三列是float4类型，并设其值为3.14
-
-        tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+        
 
         //tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
+    Datum values[3]; // 假设我们的tuplestore预期有三列
+    bool nulls[3] = {false, false, false}; // 假设这些列的值都不是NULL
 
+        // 为简化，我们使用固定的值填充这一行数据
+    values[0] = Int32GetDatum(1); // 假设第一列是int4类型，并设其值为1
+    values[1] = Int32GetDatum(2); // 假设第二列是int4类型，并设其值为2
+    values[2] = Float4GetDatum(3.14); // 假设第三列是float4类型，并设其值为3.14
+
+    tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     tuplestore_donestoring(tupstore);
     // Cleanup
     SPI_finish();
