@@ -205,9 +205,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
         int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_returnflag_int");
         int attnum3 = SPI_fnumber(SPI_tuptable->tupdesc, "l_quantity");
-        char* value1 = SPI_getvalue((SPI_tuptable->vals)[row], SPI_tuptable->tupdesc, attnum1);
-        char* value2 = SPI_getvalue((SPI_tuptable->vals)[row], SPI_tuptable->tupdesc, attnum2);
-        char* value3 = SPI_getvalue((SPI_tuptable->vals)[row], SPI_tuptable->tupdesc, attnum3);
+        char* value1 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum1);
+        char* value2 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum2);
+        char* value3 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum3);
         elog(INFO, "SPI l_suppkey -- %d", attnum1);
         elog(INFO, "SPI l_returnflag_int -- %d", attnum2);
         elog(INFO, "SPI quantity -- %d", attnum3);
