@@ -203,8 +203,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     // Process SPI results
     int i;
     for (i = 0; i < SPI_processed; i++) {
-        HeapTuple tuple = SPI_tuptable->vals[i];
-        TupleDesc tupdesc = SPI_tuptable->tupdesc;
+        //HeapTuple tuple = SPI_tuptable->vals[i];
+        //TupleDesc tupdesc = SPI_tuptable->tupdesc;
         //elog(INFO, "SPI current id is -- %d", i);
 
         int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
@@ -272,7 +272,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     values[0] = Int32GetDatum(1); // 假设第一列是int4类型，并设其值为1
     values[1] = Int32GetDatum(2); // 假设第二列是int4类型，并设其值为2
     values[2] = Float4GetDatum(3.14); // 假设第三列是float4类型，并设其值为3.14
-
+    elog(INFO, "here");
     tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     tuplestore_donestoring(tupstore);
     // Cleanup
