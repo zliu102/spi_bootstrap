@@ -229,8 +229,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
         addQuantityToGroup(group, quantity);
 
-        elog(INFO, "group l_suppkey is %d", group->l_suppkey);
-        elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
+        //elog(INFO, "group l_suppkey is %d", group->l_suppkey);
+        //elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
     }
     elog(INFO, "Finish adding");
     // Process each group: calculate random sample average and store results
@@ -250,8 +250,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         values[0] = group->l_suppkey;
         values[1] = group->l_returnflag_int;
         values[2] = avg_quantity;
-        elog(INFO, "l_suppkey is %f",group->l_suppkey);
-        elog(INFO, "l_returnflag_int is %f",group->l_returnflag_int);
+        elog(INFO, "l_suppkey is %d",group->l_suppkey);
+        elog(INFO, "l_returnflag_int is %d",group->l_returnflag_int);
         elog(INFO, "avg_quantity is %f",avg_quantity);
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
