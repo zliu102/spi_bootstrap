@@ -151,7 +151,6 @@ static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
         int idx = rand() % count; // 注意：对于非常大的数量，这里可能需要更好的随机数生成方法
         sum += quantities[idx];
     }
-    elog(INFO, "sum is %f",sum);
     return sum / sampleSize;
 }
 
@@ -245,6 +244,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         values[0] = Int32GetDatum(group->l_suppkey);
         values[1] = Int32GetDatum(group->l_returnflag_int);
         values[2] = Float4GetDatum(avg_quantity);
+        elog(INFO, "l_suppkey is %f",values[0]);
+        elog(INFO, "l_returnflag_int is %f",values[1]);
+        elog(INFO, "avg_quantity is %f",values[2]);
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
