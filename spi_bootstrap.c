@@ -172,10 +172,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-    rsinfo->setResult = tupstore;
-    rsinfo->setDesc = tupdesc;
-    rsinfo->returnMode = SFRM_Materialize;
-    
+
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
     elog(INFO, "SPI query -- %s", sql);
     int ret = SPI_execute(sql, true, 0);
@@ -192,6 +189,10 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
     Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
     MemoryContextSwitchTo(oldcontext);
+    rsinfo->setResult = tupstore;
+    rsinfo->setDesc = tupdesc;
+    rsinfo->returnMode = SFRM_Materialize;
+    
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
