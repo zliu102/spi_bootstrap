@@ -214,10 +214,13 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         elog(INFO, "SPI l_suppkey -- %s", value1);
         elog(INFO, "SPI l_returnflag_int -- %s", value2);
         elog(INFO, "SPI quantity -- %s", value3);
+        int l_suppkey = atoi(value1);
+        int l_returnflag_int = atoi(value2);
+        int quantity = atoi(value3);
 
-        int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
-        int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
-        int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
+        //int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
+        //int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
+        //int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
         elog(INFO, "SPI l_suppkey -- %d", l_suppkey);
         elog(INFO, "SPI l_returnflag_int -- %d", l_returnflag_int);
         elog(INFO, "SPI quantity -- %d", quantity);
