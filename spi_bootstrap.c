@@ -250,7 +250,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         values[0] = group->l_suppkey;
         values[1] = group->l_returnflag_int;
         values[2] = avg_quantity;
-        elog(INFO, "l_suppkey is %f",group->l_suppkey;);
+        elog(INFO, "l_suppkey is %f",group->l_suppkey);
         elog(INFO, "l_returnflag_int is %f",group->l_returnflag_int);
         elog(INFO, "avg_quantity is %f",avg_quantity);
 
