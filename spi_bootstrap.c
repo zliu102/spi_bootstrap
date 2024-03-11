@@ -244,15 +244,15 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         Datum values[3];
         bool nulls[3] = {false, false, false};
 
-        //values[0] = Int32GetDatum(group->l_suppkey);
-        //values[1] = Int32GetDatum(group->l_returnflag_int);
-        //values[2] = Float4GetDatum(avg_quantity);
-        values[0] = group->l_suppkey;
-        values[1] = group->l_returnflag_int;
-        values[2] = avg_quantity;
-        elog(INFO, "l_suppkey is %d",group->l_suppkey);
-        elog(INFO, "l_returnflag_int is %d",group->l_returnflag_int);
-        elog(INFO, "avg_quantity is %f",avg_quantity);
+        values[0] = Int32GetDatum(group->l_suppkey);
+        values[1] = Int32GetDatum(group->l_returnflag_int);
+        values[2] = Float4GetDatum(avg_quantity);
+        //values[0] = group->l_suppkey;
+        //values[1] = group->l_returnflag_int;
+        //values[2] = avg_quantity;
+        elog(INFO, "l_suppkey is %d",values[0]);
+        elog(INFO, "l_returnflag_int is %d",values[1]);
+        elog(INFO, "avg_quantity is %f",values[2]);
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
