@@ -170,7 +170,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* tablename = text_to_cstring(PG_GETARG_TEXT_PP(1));
     char* otherAttribue = text_to_cstring(PG_GETARG_TEXT_PP(2));
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
-
+    prepTuplestoreResult(fcinfo);
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
