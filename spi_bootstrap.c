@@ -159,6 +159,12 @@ static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
 PG_FUNCTION_INFO_V1(spi_bootstrap2);
 
 Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
+    int ret;
+    int i;
+    Tuplestorestate *tupstore;
+    TupleDesc tupdesc;
+    MemoryContext oldcontext;
+
     // Connect to SPI
     if (SPI_connect() != SPI_OK_CONNECT) {
         ereport(ERROR, (errmsg("SPI_connect failed")));
@@ -172,26 +178,30 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
     prepTuplestoreResult(fcinfo);
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+    if ((ret = SPI_connect()) < 0)
+    
+        elog(ERROR, "range_window: SPI_connect returned %d", ret);
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
     elog(INFO, "SPI query -- %s", sql);
-    int ret = SPI_execute(sql, true, 0);
+    ret = SPI_execute(sql, true, 0);
     if (ret != SPI_OK_SELECT) {
         SPI_finish();
         ereport(ERROR, (errmsg("SPI_execute failed")));
     }
 
     // Prepare for tuplestore use
-    TupleDesc tupdesc = CreateTemplateTupleDesc(3, false);
+    tupdesc = CreateTemplateTupleDesc(3, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
-    MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
-    Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
-    MemoryContextSwitchTo(oldcontext);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_returnflag_int", INT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "avg_l_quantity", FLOAT4OID, -1, 0);
+    oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
+    tupstore = tuplestore_begin_heap(true, false, work_mem);
+    
     rsinfo->setResult = tupstore;
     rsinfo->setDesc = tupdesc;
     rsinfo->returnMode = SFRM_Materialize;
+    MemoryContextSwitchTo(oldcontext);
     tupdesc = BlessTupleDesc(tupdesc);
 
     // Initialize GroupsContext
@@ -201,7 +211,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     groupsContext.capacity = 30000;
 
     // Process SPI results
-    int i;
+   
     for (i = 0; i < SPI_processed; i++) {
         //HeapTuple tuple = SPI_tuptable->vals[i];
         //TupleDesc tupdesc = SPI_tuptable->tupdesc;
