@@ -283,6 +283,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     values[1] = Int32GetDatum(2); // 假设第二列是int4类型，并设其值为2
     values[2] = Float4GetDatum(3.14); // 假设第三列是float4类型，并设其值为3.14
     elog(INFO, "here");
+    elog(INFO, "l_suppkey is %d",values[0]);
+    elog(INFO, "l_returnflag_int is %d",values[1]);
+    elog(INFO, "avg_l_quantity is %f",3.14);
     //tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     HeapTuple tuple = heap_form_tuple(tupdesc, values, nulls);
     tuplestore_puttuple(tupstore, tuple);
@@ -290,10 +293,6 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     tuplestore_donestoring(tupstore);
     // Cleanup
     SPI_finish();
-    
-
-    // Set up to return the tuplestore as a set
-    
 
     PG_RETURN_NULL();
 }
