@@ -178,9 +178,6 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
     prepTuplestoreResult(fcinfo);
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-    if ((ret = SPI_connect()) < 0)
-    
-        elog(ERROR, "range_window: SPI_connect returned %d", ret);
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
     elog(INFO, "SPI query -- %s", sql);
@@ -193,8 +190,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     // Prepare for tuplestore use
     tupdesc = CreateTemplateTupleDesc(3, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_returnflag_int", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "avg_l_quantity", FLOAT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
     oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
     tupstore = tuplestore_begin_heap(true, false, work_mem);
     
