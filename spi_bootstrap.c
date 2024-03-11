@@ -173,6 +173,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s')",sampleSize,tablename,otherAttribue,groupby);
+    elog(INFO, "SPI query -- %s", sql);
     int ret = SPI_execute(sql, true, 0);
     if (ret != SPI_OK_SELECT) {
         SPI_finish();
