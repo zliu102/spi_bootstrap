@@ -228,6 +228,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
         addQuantityToGroup(group, quantity);
+
+        elog(INFO, "group l_suppkey is %d", group->l_suppkey);
+        elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
     }
     elog(INFO, "Finish adding");
     // Process each group: calculate random sample average and store results
