@@ -146,13 +146,12 @@ static void addQuantityToGroup(MyGroup *group, float4 quantity) {
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
     int sampleSize = 1000;
     float4 sum = 0;
-    elog(INFO, "calculate");
     int i;
     for (i = 0; i < sampleSize; ++i) {
         int idx = rand() % count; // 注意：对于非常大的数量，这里可能需要更好的随机数生成方法
         sum += quantities[idx];
     }
-
+    elog(INFO, "sum is %f",sum);
     return sum / sampleSize;
 }
 
@@ -185,7 +184,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc = CreateTemplateTupleDesc(3, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_quantity", FLOAT8OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_quantity", FLOAT4OID, -1, 0);
     MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
     Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
     MemoryContextSwitchTo(oldcontext);
@@ -201,7 +200,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     for (i = 0; i < SPI_processed; i++) {
         HeapTuple tuple = SPI_tuptable->vals[i];
         TupleDesc tupdesc = SPI_tuptable->tupdesc;
-        elog(INFO, "SPI current id is -- %d", i);
+        //elog(INFO, "SPI current id is -- %d", i);
 
         int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
         int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_returnflag_int");
@@ -237,7 +236,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
         MyGroup *group = &groupsContext.groups[j];
-        elog(INFO, "1");
+        elog(INFO, "SPI j is -- %d", j);
         float4 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
         Datum values[3];
