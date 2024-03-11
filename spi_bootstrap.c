@@ -146,6 +146,7 @@ static void addQuantityToGroup(MyGroup *group, float4 quantity) {
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
     int sampleSize = 1000;
     float4 sum = 0;
+    elog(INFO, "calculate");
     int i;
     for (i = 0; i < sampleSize; ++i) {
         int idx = rand() % count; // 注意：对于非常大的数量，这里可能需要更好的随机数生成方法
@@ -208,12 +209,12 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         char* value1 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum1);
         char* value2 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum2);
         char* value3 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum3);
-        elog(INFO, "SPI l_suppkey -- %d", attnum1);
-        elog(INFO, "SPI l_returnflag_int -- %d", attnum2);
-        elog(INFO, "SPI quantity -- %d", attnum3);
-        elog(INFO, "SPI l_suppkey -- %s", value1);
-        elog(INFO, "SPI l_returnflag_int -- %s", value2);
-        elog(INFO, "SPI quantity -- %s", value3);
+        //elog(INFO, "SPI l_suppkey -- %d", attnum1);
+        //elog(INFO, "SPI l_returnflag_int -- %d", attnum2);
+        //elog(INFO, "SPI quantity -- %d", attnum3);
+        //elog(INFO, "SPI l_suppkey -- %s", value1);
+        //elog(INFO, "SPI l_returnflag_int -- %s", value2);
+        //elog(INFO, "SPI quantity -- %s", value3);
         int l_suppkey = atoi(value1);
         int l_returnflag_int = atoi(value2);
         int quantity = atoi(value3);
@@ -221,29 +222,30 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
         //int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
         //int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
-        elog(INFO, "SPI l_suppkey -- %d", l_suppkey);
-        elog(INFO, "SPI l_returnflag_int -- %d", l_returnflag_int);
-        elog(INFO, "SPI quantity -- %d", quantity);
+        //elog(INFO, "SPI l_suppkey -- %d", l_suppkey);
+        //elog(INFO, "SPI l_returnflag_int -- %d", l_returnflag_int);
+        //elog(INFO, "SPI quantity -- %d", quantity);
       
 
 
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
         addQuantityToGroup(group, quantity);
     }
-
+    elog(INFO, "Finish adding");
     // Process each group: calculate random sample average and store results
     srand(time(NULL)); // Initialize random seed
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
         MyGroup *group = &groupsContext.groups[j];
-        float8 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
+        elog(INFO, "1");
+        float4 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
         Datum values[3];
         bool nulls[3] = {false, false, false};
 
         values[0] = Int32GetDatum(group->l_suppkey);
         values[1] = Int32GetDatum(group->l_returnflag_int);
-        values[2] = Float8GetDatum(avg_quantity);
+        values[2] = Float4GetDatum(avg_quantity);
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
