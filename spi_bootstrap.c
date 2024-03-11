@@ -251,7 +251,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
         elog(INFO, "SPI j is -- %d", j);
-        /*MyGroup *group = &groupsContext.groups[j];
+        MyGroup *group = &groupsContext.groups[j];
         
         float4 avg_l_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
@@ -267,7 +267,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         elog(INFO, "l_suppkey is %d",values[0]);
         elog(INFO, "l_returnflag_int is %d",values[1]);
         elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
-        */
+        
         
 
         //tuplestore_putvalues(tupstore, tupdesc, values, nulls);
