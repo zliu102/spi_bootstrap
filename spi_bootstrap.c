@@ -172,7 +172,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* otherAttribue = text_to_cstring(PG_GETARG_TEXT_PP(2));
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
 
-    snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s')",sampleSize,tablename,otherAttribue,groupby);
+    snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
     elog(INFO, "SPI query -- %s", sql);
     int ret = SPI_execute(sql, true, 0);
     if (ret != SPI_OK_SELECT) {
@@ -200,11 +200,11 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     for (i = 0; i < SPI_processed; i++) {
         HeapTuple tuple = SPI_tuptable->vals[i];
         TupleDesc tupdesc = SPI_tuptable->tupdesc;
-
+        elog(INFO, "SPI current id is -- %s", sql);
         int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
         int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
         int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
-        elog(INFO, "current id is -- %d", i);
+        elog(INFO, "current id is2 -- %d", i);
 
 
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
