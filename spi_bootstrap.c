@@ -190,9 +190,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
-    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 10); // Initial capacity
+    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 30000); // Initial capacity
     groupsContext.numGroups = 0;
-    groupsContext.capacity = 10;
+    groupsContext.capacity = 30000;
 
     // Process SPI results
     int i;
@@ -203,6 +203,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
         int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
         int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
+/       elog(INFO, "current id is -- %d", i);
+
 
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
         addQuantityToGroup(group, quantity);
