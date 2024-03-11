@@ -257,10 +257,10 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
-
+    tuplestore_donestoring(tupstore);
     // Cleanup
     SPI_finish();
-    tuplestore_donestoring(tupstore);
+    
 
     // Set up to return the tuplestore as a set
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
