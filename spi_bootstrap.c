@@ -192,7 +192,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     rsinfo->setResult = tupstore;
     rsinfo->setDesc = tupdesc;
     rsinfo->returnMode = SFRM_Materialize;
-    
+    tupdesc = BlessTupleDesc(tupdesc);
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
