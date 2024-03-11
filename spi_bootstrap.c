@@ -178,6 +178,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
     prepTuplestoreResult(fcinfo);
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+    oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
     elog(INFO, "SPI query -- %s", sql);
@@ -192,14 +193,13 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
-    oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
-    tupstore = tuplestore_begin_heap(true, false, work_mem);
-    
-    rsinfo->setResult = tupstore;
-    rsinfo->setDesc = tupdesc;
-    rsinfo->returnMode = SFRM_Materialize;
-    MemoryContextSwitchTo(oldcontext);
     tupdesc = BlessTupleDesc(tupdesc);
+    
+    tupstore = tuplestore_begin_heap(true, false, work_mem);
+    MemoryContextSwitchTo(oldcontext);
+
+    
+    
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
@@ -251,7 +251,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
         elog(INFO, "SPI j is -- %d", j);
-        MyGroup *group = &groupsContext.groups[j];
+        /*MyGroup *group = &groupsContext.groups[j];
         
         float4 avg_l_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
@@ -267,7 +267,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         elog(INFO, "l_suppkey is %d",values[0]);
         elog(INFO, "l_returnflag_int is %d",values[1]);
         elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
-        
+        */
         
 
         //tuplestore_putvalues(tupstore, tupdesc, values, nulls);
@@ -289,6 +289,11 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
     tuplestore_donestoring(tupstore);
     // Cleanup
+
+    rsinfo->setResult = tupstore;
+    rsinfo->setDesc = tupdesc;
+    rsinfo->returnMode = SFRM_Materialize;
+    
     SPI_finish();
 
     PG_RETURN_NULL();
