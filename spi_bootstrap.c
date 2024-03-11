@@ -252,7 +252,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //values[2] = avg_quantity;
         elog(INFO, "l_suppkey is %d",values[0]);
         elog(INFO, "l_returnflag_int is %d",values[1]);
-        elog(INFO, "avg_quantity is %f",values[2]);
+        elog(INFO, "avg_quantity is %f",avg_quantity);
+        elog(INFO, "avg_quantity2 is %f",values[2]);
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
