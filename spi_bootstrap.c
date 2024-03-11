@@ -183,7 +183,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     TupleDesc tupdesc = CreateTemplateTupleDesc(3, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_quantity", FLOAT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
     MemoryContext oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
     Tuplestorestate *tupstore = tuplestore_begin_heap(true, false, work_mem);
     MemoryContextSwitchTo(oldcontext);
@@ -239,21 +239,21 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     for (j = 0; j < groupsContext.numGroups; j++) {
         MyGroup *group = &groupsContext.groups[j];
         elog(INFO, "SPI j is -- %d", j);
-        float4 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
+        float4 avg_l_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
         Datum values[3];
         bool nulls[3] = {false, false, false};
 
         values[0] = Int32GetDatum(group->l_suppkey);
         values[1] = Int32GetDatum(group->l_returnflag_int);
-        values[2] = Float4GetDatum(avg_quantity);
+        values[2] = Float4GetDatum(avg_l_quantity);
         //values[0] = group->l_suppkey;
         //values[1] = group->l_returnflag_int;
         //values[2] = avg_quantity;
         elog(INFO, "l_suppkey is %d",values[0]);
         elog(INFO, "l_returnflag_int is %d",values[1]);
-        elog(INFO, "avg_quantity is %f",avg_quantity);
-        elog(INFO, "avg_quantity2 is %f",values[2]);
+        elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
+    
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     }
