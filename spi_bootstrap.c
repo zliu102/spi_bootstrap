@@ -68,18 +68,18 @@ typedef struct {
     float4 *quantities;
     int count;
     int capacity;
-} Group;
+} MyGroup;
 
 typedef struct {
-    Group *groups;
+    MyGroup *groups;
     int numGroups;
     int capacity;
 } GroupsContext;
 
 // Utility function declarations
 static void prepTuplestoreResult(FunctionCallInfo fcinfo);
-static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int);
-static void addQuantityToGroup(Group *group, float4 quantity);
+static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int);
+static void addQuantityToGroup(MyGroup *group, float4 quantity);
 static float4 calculateRandomSampleAverage(float4 *quantities, int count);
 
 
@@ -106,7 +106,7 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
     rsinfo->setDesc = NULL;
 }
 // 寻找或创建新的分组
-static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int) {
+static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int) {
     // 搜索现有分组
     int i;
     for (i = 0; i < context->numGroups; ++i) {
@@ -119,10 +119,10 @@ static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_ret
     if (context->numGroups >= context->capacity) {
         // 动态扩容
         context->capacity *= 2;
-        context->groups = (Group *) repalloc(context->groups, sizeof(Group) * context->capacity);
+        context->groups = (MyGroup *) repalloc(context->groups, sizeof(MyGroup) * context->capacity);
     }
 
-    Group *newGroup = &context->groups[context->numGroups++];
+    MyGroup *newGroup = &context->groups[context->numGroups++];
     newGroup->l_suppkey = l_suppkey;
     newGroup->l_returnflag_int = l_returnflag_int;
     newGroup->quantities = (float4 *) palloc(sizeof(float4) * 100); // 初始容量
@@ -133,7 +133,7 @@ static Group* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_ret
 }
 
 // 向分组添加数量
-static void addQuantityToGroup(Group *group, float4 quantity) {
+static void addQuantityToGroup(MyGroup *group, float4 quantity) {
     if (group->count >= group->capacity) {
         // 动态扩容
         group->capacity *= 2;
@@ -144,7 +144,7 @@ static void addQuantityToGroup(Group *group, float4 quantity) {
 
 // 从分组中随机抽样并计算平均值
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
-    int sampleSize = 1000 < count ? 1000 : count;
+    int sampleSize = 1000;
     float4 sum = 0;
     int i;
     for (i = 0; i < sampleSize; ++i) {
@@ -152,7 +152,7 @@ static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
         sum += quantities[idx];
     }
 
-    return sampleSize > 0 ? sum / sampleSize : 0;
+    return sum / sampleSize;
 }
 
 
@@ -185,7 +185,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
-    groupsContext.groups = (Group *)palloc(sizeof(Group) * 10); // Initial capacity
+    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 10); // Initial capacity
     groupsContext.numGroups = 0;
     groupsContext.capacity = 10;
 
@@ -199,7 +199,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
         int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
 
-        Group *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
+        MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
         addQuantityToGroup(group, quantity);
     }
 
@@ -207,7 +207,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     srand(time(NULL)); // Initialize random seed
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
-        Group *group = &groupsContext.groups[j];
+        MyGroup *group = &groupsContext.groups[j];
         float8 avg_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
         Datum values[3];
