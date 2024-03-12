@@ -192,7 +192,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     tupdesc = CreateTemplateTupleDesc(3, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", INT4OID, -1, 0);
     tupdesc = BlessTupleDesc(tupdesc);
     
     tupstore = tuplestore_begin_heap(true, false, work_mem);
@@ -278,11 +279,12 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         // 为简化，我们使用固定的值填充这一行数据
     values[0] = Int32GetDatum(1); // 假设第一列是int4类型，并设其值为1
     values[1] = Int32GetDatum(2); // 假设第二列是int4类型，并设其值为2
-    values[2] = Float4GetDatum(3.14); // 假设第三列是float4类型，并设其值为3.14
+    values[2] = Int32GetDatum(3);
+    //values[2] = Float4GetDatum(4); // 假设第三列是float4类型，并设其值为3.14
     elog(INFO, "here");
     elog(INFO, "l_suppkey is %d",values[0]);
     elog(INFO, "l_returnflag_int is %d",values[1]);
-    elog(INFO, "avg_l_quantity is %f",3.14);
+    elog(INFO, "avg_l_quantity is %d",values[2]);
     tuplestore_putvalues(tupstore, tupdesc, values, nulls);
     //HeapTuple tuple = heap_form_tuple(tupdesc, values, nulls);
     //tuplestore_puttuple(tupstore, tuple);
