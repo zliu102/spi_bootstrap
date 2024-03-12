@@ -43,7 +43,7 @@ LANGUAGE C STRICT;
 */
 
 CREATE FUNCTION spi_bootstrap2(sampleSize text, tablename text, otherAttribue text,groupby text) 
-RETURNS TABLE (l_suppkey int, l_returnflag_int int, avg_l_quantity int) 
+RETURNS TABLE (l_suppkey int, l_returnflag_int int, avg_l_quantity float4) 
 AS 'MODULE_PATHNAME','spi_bootstrap2' 
 LANGUAGE C STRICT;
 
