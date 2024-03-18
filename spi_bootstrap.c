@@ -105,9 +105,9 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
     rsinfo->setResult = NULL;
     rsinfo->setDesc = NULL;
 }
-// 寻找或创建新的分组
+
 static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int) {
-    // 搜索现有分组
+ 
     int i;
     for (i = 0; i < context->numGroups; ++i) {
         if (context->groups[i].l_suppkey == l_suppkey && context->groups[i].l_returnflag_int == l_returnflag_int) {
@@ -115,9 +115,9 @@ static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_r
         }
     }
 
-    // 需要创建新分组
+
     if (context->numGroups >= context->capacity) {
-        // 动态扩容
+        
         context->capacity *= 2;
         context->groups = (MyGroup *) repalloc(context->groups, sizeof(MyGroup) * context->capacity);
     }
@@ -125,30 +125,30 @@ static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_r
     MyGroup *newGroup = &context->groups[context->numGroups++];
     newGroup->l_suppkey = l_suppkey;
     newGroup->l_returnflag_int = l_returnflag_int;
-    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 100); // 初始容量
+    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 100); // problem
     newGroup->count = 0;
     newGroup->capacity = 100;
 
     return newGroup;
 }
 
-// 向分组添加数量
+
 static void addQuantityToGroup(MyGroup *group, float4 quantity) {
     if (group->count >= group->capacity) {
-        // 动态扩容
+        
         group->capacity *= 2;
         group->quantities = (float4 *) repalloc(group->quantities, sizeof(float4) * group->capacity);
     }
     group->quantities[group->count++] = quantity;
 }
 
-// 从分组中随机抽样并计算平均值
+
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
     int sampleSize = 1000;
     float4 sum = 0;
     int i;
     for (i = 0; i < sampleSize; ++i) {
-        int idx = rand() % count; // 注意：对于非常大的数量，这里可能需要更好的随机数生成方法
+        int idx = rand() % count; 
         sum += quantities[idx];
     }
     return sum / sampleSize;
@@ -163,7 +163,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     int i;
     Tuplestorestate *tupstore;
     TupleDesc tupdesc;
-    MemoryContext oldcontext;
+    //MemoryContext oldcontext;
 
     // Connect to SPI
     if (SPI_connect() != SPI_OK_CONNECT) {
@@ -178,10 +178,10 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
     prepTuplestoreResult(fcinfo);
     ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-    oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
+    //oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
-    elog(INFO, "SPI query -- %s", sql);
+    //elog(INFO, "SPI query -- %s", sql);
     ret = SPI_execute(sql, true, 0);
     if (ret != SPI_OK_SELECT) {
         SPI_finish();
@@ -197,14 +197,14 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     tupdesc = BlessTupleDesc(tupdesc);
     
     tupstore = tuplestore_begin_heap(true, false, work_mem);
-    MemoryContextSwitchTo(oldcontext);
+    //MemoryContextSwitchTo(oldcontext); //problem 
 
     
     
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
-    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 30000); // Initial capacity
+    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 30000); // problem 1Initial capacity
     groupsContext.numGroups = 0;
     groupsContext.capacity = 30000;
 
@@ -238,8 +238,6 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //elog(INFO, "SPI l_returnflag_int -- %d", l_returnflag_int);
         //elog(INFO, "SPI quantity -- %d", quantity);
       
-
-
         MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
         addQuantityToGroup(group, quantity);
 
@@ -252,7 +250,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
         elog(INFO, "SPI j is -- %d", j);
-        /*MyGroup *group = &groupsContext.groups[j];
+        /*
+        MyGroup *group = &groupsContext.groups[j];
         
         float4 avg_l_quantity = calculateRandomSampleAverage(group->quantities, group->count);
 
@@ -268,19 +267,20 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         elog(INFO, "l_suppkey is %d",values[0]);
         elog(INFO, "l_returnflag_int is %d",values[1]);
         elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
-        */
+        
         
 
-        //tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+        tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+        */
     }
-    Datum values[3]; // 假设我们的tuplestore预期有三列
-    bool nulls[3] = {false, false, false}; // 假设这些列的值都不是NULL
+    Datum values[3]; 
+    bool nulls[3] = {false, false, false}; 
 
-        // 为简化，我们使用固定的值填充这一行数据
-    values[0] = Int32GetDatum(1); // 假设第一列是int4类型，并设其值为1
-    values[1] = Int32GetDatum(2); // 假设第二列是int4类型，并设其值为2
+        
+    values[0] = Int32GetDatum(1); 
+    values[1] = Int32GetDatum(2); 
     //values[2] = Int32GetDatum(3);
-    values[2] = Float4GetDatum(3.14); // 假设第三列是float4类型，并设其值为3.14
+    values[2] = Float4GetDatum(3.14); 
     elog(INFO, "here");
     elog(INFO, "l_suppkey is %d",values[0]);
     elog(INFO, "l_returnflag_int is %d",values[1]);
