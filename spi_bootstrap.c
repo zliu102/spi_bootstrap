@@ -163,8 +163,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     int i;
     Tuplestorestate *tupstore;
     TupleDesc tupdesc;
-    //MemoryContext oldcontext;
-
+    MemoryContext oldcontext;
+    MemoryContext per_query_ctx;
+    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
     // Connect to SPI
     if (SPI_connect() != SPI_OK_CONNECT) {
         ereport(ERROR, (errmsg("SPI_connect failed")));
@@ -176,9 +177,14 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     char* tablename = text_to_cstring(PG_GETARG_TEXT_PP(1));
     char* otherAttribue = text_to_cstring(PG_GETARG_TEXT_PP(2));
     char* groupby = text_to_cstring(PG_GETARG_TEXT_PP(3));
-    prepTuplestoreResult(fcinfo);
-    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+    //prepTuplestoreResult(fcinfo);
+    
     //oldcontext = MemoryContextSwitchTo(CurrentMemoryContext);
+    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+    oldcontext = MemoryContextSwitchTo(per_query_ctx);
+    tupstore = tuplestore_begin_heap(true, false, work_mem);
+    MemoryContextSwitchTo(oldcontext); //test
+
 
     snprintf(sql, sizeof(sql), "select * from reservoir_sampler_tpch(%s,'%s','%s','%s');",sampleSize,tablename,otherAttribue,groupby);
     //elog(INFO, "SPI query -- %s", sql);
@@ -194,9 +200,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
     //TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", INT4OID, -1, 0);
-    tupdesc = BlessTupleDesc(tupdesc);
+    //tupdesc = BlessTupleDesc(tupdesc);
     
-    tupstore = tuplestore_begin_heap(true, false, work_mem);
+    //tupstore = tuplestore_begin_heap(true, false, work_mem);
     //MemoryContextSwitchTo(oldcontext); //problem 
 
     
@@ -244,7 +250,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //elog(INFO, "group l_suppkey is %d", group->l_suppkey);
         //elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
     }
-    elog(INFO, "Finish adding");
+    //elog(INFO, "Finish adding");
     // Process each group: calculate random sample average and store results
     srand(time(NULL)); // Initialize random seed
     int j;
