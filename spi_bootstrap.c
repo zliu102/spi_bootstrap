@@ -125,9 +125,9 @@ static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_r
     MyGroup *newGroup = &context->groups[context->numGroups++];
     newGroup->l_suppkey = l_suppkey;
     newGroup->l_returnflag_int = l_returnflag_int;
-    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 100); // problem
+    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 20); // problem
     newGroup->count = 0;
-    newGroup->capacity = 100;
+    newGroup->capacity = 20;
 
     return newGroup;
 }
@@ -255,8 +255,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     srand(time(NULL)); // Initialize random seed
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
-        elog(INFO, "SPI j is -- %d", j);
-        /*
+        //elog(INFO, "SPI j is -- %d", j);
+        
         MyGroup *group = &groupsContext.groups[j];
         
         float4 avg_l_quantity = calculateRandomSampleAverage(group->quantities, group->count);
@@ -270,15 +270,16 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //values[0] = group->l_suppkey;
         //values[1] = group->l_returnflag_int;
         //values[2] = avg_quantity;
-        elog(INFO, "l_suppkey is %d",values[0]);
-        elog(INFO, "l_returnflag_int is %d",values[1]);
-        elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
+        //elog(INFO, "l_suppkey is %d",values[0]);
+        //elog(INFO, "l_returnflag_int is %d",values[1]);
+        //elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
         
         
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-        */
+        
     }
+    /*
     Datum values[3]; 
     bool nulls[3] = {false, false, false}; 
 
@@ -291,7 +292,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     elog(INFO, "l_suppkey is %d",values[0]);
     elog(INFO, "l_returnflag_int is %d",values[1]);
     elog(INFO, "avg_l_quantity is %f",3.14);
-    tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+    tuplestore_putvalues(tupstore, tupdesc, values, nulls);*/
     //HeapTuple tuple = heap_form_tuple(tupdesc, values, nulls);
     //tuplestore_puttuple(tupstore, tuple);
 
