@@ -119,6 +119,7 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
     // 检查上一个值是否相同（这里使用 strcmp 比较字符串）
     if ((last_l_suppkey != NULL && strcmp(l_suppkey, last_l_suppkey) == 0) &&
         (last_l_partkey != NULL && strcmp(l_partkey, last_l_partkey) == 0)) {
+        elog(INFO, "lzy same");
         return last_groupIndex;
     }
 
@@ -310,8 +311,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
         Datum values[6];
         bool nulls[6] = {false, false, false, false,false, false};
-        elog(INFO, "l_suppkey 0 is %s", group->l_suppkey);
-        elog(INFO, "l_partkey 0 is %s", group->l_partkey);
+        //elog(INFO, "l_suppkey 0 is %s", group->l_suppkey);
+        //elog(INFO, "l_partkey 0 is %s", group->l_partkey);
         //values[0] = Int32GetDatum(group->l_suppkey);
         //values[1] = DirectFunctionCall1(float8_numeric, Float8GetDatum(group->l_tax));
         values[0] = Int32GetDatum(atoi(group->l_suppkey));
