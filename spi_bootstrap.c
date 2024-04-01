@@ -145,6 +145,11 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
     newGroup->linenumbers = (float4 *) palloc(sizeof(float4) * 2); 
     newGroup->count = 0;
     newGroup->capacity = 2;
+
+    last_l_suppkey = context->groups[newIndex]->l_suppkey;
+    last_l_partkey = context->groups[newIndex]->l_partkey;
+    last_groupIndex = newIndex;
+
     context->numGroups++;
     return newIndex;
 }
