@@ -285,11 +285,12 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
     }
     elog(INFO, "Finish adding");
+    elog(INFO, "numGroups is %d",groupsContext.numGroups);
     // Process each group: calculate random sample average and store results
     srand(time(NULL)); // Initialize random seed
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
-        elog(INFO, "SPI j is -- %d", j);
+        //elog(INFO, "SPI j is -- %d", j);
         
         MyGroup *group = &groupsContext.groups[j];
         
