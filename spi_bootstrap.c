@@ -59,7 +59,9 @@
 #include "miscadmin.h"
 #include "access/printtup.h"
 //#include "/home/oracle/datasets/postgres11ps/postgres-pbds/contrib/intarray/_int.h"
-
+#define MAX_QUANTITIES 2 
+#define MAX_GROUPS 799541
+#define RESAMPLE_TIMES 50
 PG_MODULE_MAGIC;
 
 typedef struct {
@@ -115,15 +117,15 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
     static char* last_l_suppkey = NULL; 
     static char* last_l_partkey = NULL;
     static int last_groupIndex = -1;
-    elog(INFO, "last_l_suppkey is %s",last_l_suppkey);
-    elog(INFO, "last_l_partkey is %s",last_l_partkey);
-    elog(INFO, "l_suppkey is %s",l_suppkey);
-    elog(INFO, "l_partkey is %s",l_partkey);
+    //elog(INFO, "last_l_suppkey is %s",last_l_suppkey);
+    //elog(INFO, "last_l_partkey is %s",last_l_partkey);
+    //elog(INFO, "l_suppkey is %s",l_suppkey);
+    //elog(INFO, "l_partkey is %s",l_partkey);
 
     // 检查上一个值是否相同（这里使用 strcmp 比较字符串）
     if ((last_l_suppkey != NULL && strcmp(l_suppkey, last_l_suppkey) == 0) &&
         (last_l_partkey != NULL && strcmp(l_partkey, last_l_partkey) == 0)) {
-        elog(INFO, "lzy same");
+        //elog(INFO, "lzy same");
         return last_groupIndex;
     }
 
@@ -139,12 +141,12 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
     MyGroup *newGroup = &context->groups[newIndex];
     newGroup->l_suppkey = strdup(l_suppkey);
     newGroup->l_partkey = strdup(l_partkey);
-    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 2); 
-    newGroup->orderkeys = (float4 *) palloc(sizeof(float4) * 2); 
-    newGroup->extendedprices = (float4 *) palloc(sizeof(float4) * 2); 
-    newGroup->linenumbers = (float4 *) palloc(sizeof(float4) * 2); 
+    newGroup->quantities = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
+    newGroup->orderkeys = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
+    newGroup->extendedprices = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
+    newGroup->linenumbers = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
     newGroup->count = 0;
-    newGroup->capacity = 2;
+    newGroup->capacity = MAX_QUANTITIES;
 
     last_l_suppkey = l_suppkey;
     last_l_partkey = l_partkey;
@@ -173,7 +175,7 @@ static void addAttributeToGroup(MyGroup *group, float4 quantity, float4 orderkey
 
 
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
-    int sampleSize = 100;
+    int sampleSize = MAX_QUANTITIES*50;
     float4 sum = 0;
     int i;
     for (i = 0; i < sampleSize; ++i) {
@@ -244,9 +246,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
-    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 799541); // problem 1Initial capacity
+    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * MAX_GROUPS); // problem 1Initial capacity
     groupsContext.numGroups = 0;
-    groupsContext.capacity = 799541;
+    groupsContext.capacity = MAX_GROUPS;
 
     // Process SPI results
    
@@ -282,8 +284,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         int extendedprice = atoi(value6);
         //double discount = strtod(value7, NULL);
         int linenumber = atoi(value8);
-        elog(INFO, "l_suppkey is %s",value1);
-        elog(INFO, "l_partkey is %s",value2);
+        //elog(INFO, "l_suppkey is %s",value1);
+        //elog(INFO, "l_partkey is %s",value2);
         
         int groupIndex = findOrCreateGroup(&groupsContext, value1, value2);
         if (groupIndex != -1) { 
