@@ -115,7 +115,11 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
     static char* last_l_suppkey = NULL; 
     static char* last_l_partkey = NULL;
     static int last_groupIndex = -1;
-    
+    elog(INFO, "last_l_suppkey is %s",last_l_suppkey);
+    elog(INFO, "last_l_partkey is %s",last_l_partkey);
+    elog(INFO, "l_suppkey is %s",l_suppkey);
+    elog(INFO, "l_partkey is %s",l_partkey);
+
     // 检查上一个值是否相同（这里使用 strcmp 比较字符串）
     if ((last_l_suppkey != NULL && strcmp(l_suppkey, last_l_suppkey) == 0) &&
         (last_l_partkey != NULL && strcmp(l_partkey, last_l_partkey) == 0)) {
