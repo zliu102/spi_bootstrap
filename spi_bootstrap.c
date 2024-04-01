@@ -140,7 +140,7 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
     newGroup->linenumbers = (float4 *) palloc(sizeof(float4) * 2); 
     newGroup->count = 0;
     newGroup->capacity = 2;
-    context->numGroups++
+    context->numGroups++;
     return newIndex;
 }
 
