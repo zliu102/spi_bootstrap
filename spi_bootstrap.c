@@ -63,9 +63,13 @@
 PG_MODULE_MAGIC;
 
 typedef struct {
-    int l_suppkey;
-    int l_returnflag_int;
+    char* l_suppkey; 
+    char* l_partkey; 
     float4 *quantities;
+    float4 *orderkeys;
+    float4 *extendedprices;
+    //float4 discounts[MAX_QUANTITIES];
+    float4 *linenumbers;
     int count;
     int capacity;
 } MyGroup;
@@ -78,8 +82,8 @@ typedef struct {
 
 // Utility function declarations
 static void prepTuplestoreResult(FunctionCallInfo fcinfo);
-static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int);
-static void addQuantityToGroup(MyGroup *group, float4 quantity);
+static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_partkey);
+static void addQuantityToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 linenumber);
 static float4 calculateRandomSampleAverage(float4 *quantities, int count);
 
 
@@ -106,13 +110,16 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
     rsinfo->setDesc = NULL;
 }
 
-static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_returnflag_int) {
+static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_partkey) {
  
-    int i;
-    for (i = 0; i < context->numGroups; ++i) {
-        if (context->groups[i].l_suppkey == l_suppkey && context->groups[i].l_returnflag_int == l_returnflag_int) {
-            return &context->groups[i];
-        }
+    static char* last_l_suppkey = NULL; 
+    static char* last_l_partkey = NULL;
+    static int last_groupIndex = -1;
+    
+    // 检查上一个值是否相同（这里使用 strcmp 比较字符串）
+    if ((last_l_suppkey != NULL && strcmp(l_suppkey, last_l_suppkey) == 0) &&
+        (last_l_partkey != NULL && strcmp(l_partkey, last_l_partkey) == 0)) {
+        return last_groupIndex;
     }
 
 
@@ -122,29 +129,41 @@ static MyGroup* findOrCreateGroup(GroupsContext *context, int l_suppkey, int l_r
         context->groups = (MyGroup *) repalloc(context->groups, sizeof(MyGroup) * context->capacity);
     }
 
-    MyGroup *newGroup = &context->groups[context->numGroups++];
-    newGroup->l_suppkey = l_suppkey;
-    newGroup->l_returnflag_int = l_returnflag_int;
-    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 20); // problem
-    newGroup->count = 0;
-    newGroup->capacity = 20;
+    int newIndex = context->numGroups;
 
-    return newGroup;
+    MyGroup *newGroup = &context->groups[newIndex];
+    newGroup->l_suppkey = strdup(l_suppkey);
+    newGroup->l_partkey = strdup(l_partkey);
+    newGroup->quantities = (float4 *) palloc(sizeof(float4) * 2); 
+    newGroup->orderkeys = (float4 *) palloc(sizeof(float4) * 2); 
+    newGroup->extendedprices = (float4 *) palloc(sizeof(float4) * 2); 
+    newGroup->linenumbers = (float4 *) palloc(sizeof(float4) * 2); 
+    newGroup->count = 0;
+    newGroup->capacity = 2;
+    context->numGroups++
+    return newIndex;
 }
 
 
-static void addQuantityToGroup(MyGroup *group, float4 quantity) {
+static void addQuantityToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 linenumber) {
     if (group->count >= group->capacity) {
         
         group->capacity *= 2;
         group->quantities = (float4 *) repalloc(group->quantities, sizeof(float4) * group->capacity);
+        group->orderkeys = (float4 *) repalloc(group->orderkeys, sizeof(float4) * group->capacity);
+        group->extendedprices = (float4 *) repalloc(group->extendedprices, sizeof(float4) * group->capacity);
+        group->linenumbers = (float4 *) repalloc(group->linenumbers, sizeof(float4) * group->capacity);
     }
-    group->quantities[group->count++] = quantity;
+    group->quantities[group->count] = quantity;
+    group->orderkeys[group->count] = orderkey;
+    group->extendedprices[group->count] = extendedprice;
+    group->linenumbers[group->count] = linenumber;
+    group->count++;
 }
 
 
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
-    int sampleSize = 1000;
+    int sampleSize = 100;
     float4 sum = 0;
     int i;
     for (i = 0; i < sampleSize; ++i) {
@@ -195,24 +214,29 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     }
 
     // Prepare for tuplestore use
-    tupdesc = CreateTemplateTupleDesc(3, false);
+    tupdesc = CreateTemplateTupleDesc(6, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_returnflag_int", INT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_partkey", INT4OID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
-    //TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", INT4OID, -1, 0);
-    //tupdesc = BlessTupleDesc(tupdesc);
-    
-    //tupstore = tuplestore_begin_heap(true, false, work_mem);
-    //MemoryContextSwitchTo(oldcontext); //problem 
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 4, "std_l_quantity", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_partkey", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 4, "std_l_partkey", FLOAT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 4, "avg_l_orderkey", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 8, "std_l_orderkey", FLOAT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 5, "avg_l_extendedprice", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 6, "std_l_extendedprice", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 6, "avg_l_discount", FLOAT4OID, -1, 0);
+    //TupleDescInitEntry(tupdesc, (AttrNumber) 12, "std_l_discount", FLOAT4OID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 6, "avg_l_linenumber", FLOAT4OID, -1, 0);
 
     
     
 
     // Initialize GroupsContext
     GroupsContext groupsContext;
-    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 30000); // problem 1Initial capacity
+    groupsContext.groups = (MyGroup *)palloc(sizeof(MyGroup) * 799541); // problem 1Initial capacity
     groupsContext.numGroups = 0;
-    groupsContext.capacity = 30000;
+    groupsContext.capacity = 799541;
 
     // Process SPI results
    
@@ -221,31 +245,41 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //TupleDesc tupdesc = SPI_tuptable->tupdesc;
         //elog(INFO, "SPI current id is -- %d", i);
 
-        int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
-        int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_returnflag_int");
+       int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
+        int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_partkey");
         int attnum3 = SPI_fnumber(SPI_tuptable->tupdesc, "l_quantity");
+        //int attnum4 = SPI_fnumber(SPI_tuptable->tupdesc, "l_partkey");
+        int attnum5 = SPI_fnumber(SPI_tuptable->tupdesc, "l_orderkey");
+        int attnum6 = SPI_fnumber(SPI_tuptable->tupdesc, "l_extendedprice");
+        //int attnum7 = SPI_fnumber(SPI_tuptable->tupdesc, "l_discount");
+        int attnum8 = SPI_fnumber(SPI_tuptable->tupdesc, "l_linenumber");
+
         char* value1 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum1);
         char* value2 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum2);
         char* value3 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum3);
-        //elog(INFO, "SPI l_suppkey -- %d", attnum1);
-        //elog(INFO, "SPI l_returnflag_int -- %d", attnum2);
-        //elog(INFO, "SPI quantity -- %d", attnum3);
-        //elog(INFO, "SPI l_suppkey -- %s", value1);
-        //elog(INFO, "SPI l_returnflag_int -- %s", value2);
-        //elog(INFO, "SPI quantity -- %s", value3);
-        int l_suppkey = atoi(value1);
-        int l_returnflag_int = atoi(value2);
-        int quantity = atoi(value3);
+        //char* value4 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum4);
+        char* value5 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum5);
+        char* value6 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum6);
+        //char* value7 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum7);
+        char* value8 = SPI_getvalue((SPI_tuptable->vals)[i], SPI_tuptable->tupdesc, attnum8);
 
-        //int l_suppkey = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 1, NULL));
-        //int l_returnflag_int = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 2, NULL));
-        //int quantity = DatumGetInt32(SPI_getbinval(tuple, tupdesc, 3, NULL));
-        //elog(INFO, "SPI l_suppkey -- %d", l_suppkey);
-        //elog(INFO, "SPI l_returnflag_int -- %d", l_returnflag_int);
-        //elog(INFO, "SPI quantity -- %d", quantity);
+        //int l_suppkey = atoi(value1);
+        //int l_returnflag_int = atoi(value2);
+        //double l_tax = strtod(value2, NULL); 
+        int quantity = atoi(value3);
+        //int partkey = atoi(value3);
+        int orderkey = atoi(value5);
+        int extendedprice = atoi(value6);
+        //double discount = strtod(value7, NULL);
+        int linenumber = atoi(value8);
+        //elog(INFO, "l_suppkey is %d",atoi(value1));
+        //elog(INFO, "l_linenumber is %d",atoi(value2));
       
-        MyGroup *group = findOrCreateGroup(&groupsContext, l_suppkey, l_returnflag_int);
-        addQuantityToGroup(group, quantity);
+        int groupIndex = findOrCreateGroup(&groupsContext, value1, value2);
+        if (groupIndex != -1) { 
+            addAttributeToGroup(&groupsContext.groups[groupIndex],quantity,orderkey,extendedprice,linenumber);
+            //addAttributeToGroup(&groupsContext.groups[groupIndex],quantity);
+        }
 
         //elog(INFO, "group l_suppkey is %d", group->l_suppkey);
         //elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
@@ -260,20 +294,42 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         MyGroup *group = &groupsContext.groups[j];
         
         float4 avg_l_quantity = calculateRandomSampleAverage(group->quantities, group->count);
-
-        Datum values[3];
-        bool nulls[3] = {false, false, false};
-
-        values[0] = Int32GetDatum(group->l_suppkey);
-        values[1] = Int32GetDatum(group->l_returnflag_int);
-        values[2] = Float4GetDatum(avg_l_quantity);
-        //values[0] = group->l_suppkey;
-        //values[1] = group->l_returnflag_int;
-        //values[2] = avg_quantity;
-        //elog(INFO, "l_suppkey is %d",values[0]);
-        //elog(INFO, "l_returnflag_int is %d",values[1]);
-        //elog(INFO, "avg_l_quantity is %f",avg_l_quantity);
+        //float4 stddev_l_quantity = calculateStandardDeviation(group->quantities, group->count, avg_l_quantity);
+        //float4 avg_l_partkey = calculateRandomSampleAverage(group->partkeys, group->count);
+        //float4 stddev_l_partkey = calculateStandardDeviation(group->partkeys, group->count, avg_l_partkey);
+        float4 avg_l_orderkey = calculateRandomSampleAverage(group->orderkeys, group->count);
+        //float4 stddev_l_orderkey = calculateStandardDeviation(group->orderkeys, group->count, avg_l_orderkey);
+        float4 avg_l_extendedprice = calculateRandomSampleAverage(group->extendedprices, group->count);
+        //float4 stddev_l_extendedprice = calculateStandardDeviation(group->extendedprices, group->count, avg_l_extendedprice);
+        //float4 avg_l_discount = calculateRandomSampleAverage(group->discounts, group->count);
+        //float4 stddev_l_discount = calculateStandardDeviation(group->discounts, group->count, avg_l_discount);
+        float4 avg_l_linenumber = calculateRandomSampleAverage(group->linenumbers, group->count);
+        //float4 stddev_l_linenumber = calculateStandardDeviation(group->linenumbers, group->count, avg_l_linenumber);
         
+
+        Datum values[6];
+        bool nulls[6] = {false, false, false, false,false, false};
+        //elog(INFO, "l_suppkey 0 is %s", group->l_suppkey);
+        //elog(INFO, "l_linenumber 0 is %s", group->l_linenumber);
+        //values[0] = Int32GetDatum(group->l_suppkey);
+        //values[1] = DirectFunctionCall1(float8_numeric, Float8GetDatum(group->l_tax));
+        values[0] = Int32GetDatum(atoi(group->l_suppkey));
+        //values[1] = DirectFunctionCall3(numeric_in, CStringGetDatum(group->l_discount), ObjectIdGetDatum(InvalidOid), Int32GetDatum(-1));
+        values[1] = Int32GetDatum(atoi(group->l_partkey));
+        values[2] = Float4GetDatum(avg_l_quantity);
+        //values[3] = Float4GetDatum(stddev_l_quantity);
+        //values[2] = Float4GetDatum(avg_l_partkey);
+        //values[3] = Float4GetDatum(stddev_l_partkey);
+        values[3] = Float4GetDatum(avg_l_orderkey);
+        //values[7] = Float4GetDatum(stddev_l_orderkey);
+        values[4] = Float4GetDatum(avg_l_extendedprice);
+        //values[5] = Float4GetDatum(stddev_l_extendedprice);
+        //values[5] = Float4GetDatum(avg_l_discount);
+        //values[11] = Float4GetDatum(stddev_l_discount);
+        values[5] = Float4GetDatum(avg_l_linenumber);
+        //values[13] = Float4GetDatum(stddev_l_linenumber);
+        //elog(INFO, "l_suppkey is %d", values[0]);
+        //elog(INFO, "l_linenumber is %d", values[1]);
         
 
         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
