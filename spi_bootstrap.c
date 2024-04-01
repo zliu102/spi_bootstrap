@@ -245,7 +245,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //TupleDesc tupdesc = SPI_tuptable->tupdesc;
         //elog(INFO, "SPI current id is -- %d", i);
 
-       int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
+        int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
         int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_partkey");
         int attnum3 = SPI_fnumber(SPI_tuptable->tupdesc, "l_quantity");
         //int attnum4 = SPI_fnumber(SPI_tuptable->tupdesc, "l_partkey");
@@ -284,12 +284,12 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //elog(INFO, "group l_suppkey is %d", group->l_suppkey);
         //elog(INFO, "group l_returnflag_int is %d", group->l_returnflag_int); 
     }
-    //elog(INFO, "Finish adding");
+    elog(INFO, "Finish adding");
     // Process each group: calculate random sample average and store results
     srand(time(NULL)); // Initialize random seed
     int j;
     for (j = 0; j < groupsContext.numGroups; j++) {
-        //elog(INFO, "SPI j is -- %d", j);
+        elog(INFO, "SPI j is -- %d", j);
         
         MyGroup *group = &groupsContext.groups[j];
         
@@ -309,8 +309,8 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
 
         Datum values[6];
         bool nulls[6] = {false, false, false, false,false, false};
-        //elog(INFO, "l_suppkey 0 is %s", group->l_suppkey);
-        //elog(INFO, "l_linenumber 0 is %s", group->l_linenumber);
+        elog(INFO, "l_suppkey 0 is %s", group->l_suppkey);
+        elog(INFO, "l_partkey 0 is %s", group->l_partkey);
         //values[0] = Int32GetDatum(group->l_suppkey);
         //values[1] = DirectFunctionCall1(float8_numeric, Float8GetDatum(group->l_tax));
         values[0] = Int32GetDatum(atoi(group->l_suppkey));
