@@ -83,7 +83,7 @@ typedef struct {
 // Utility function declarations
 static void prepTuplestoreResult(FunctionCallInfo fcinfo);
 static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_partkey);
-static void addQuantityToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 linenumber);
+static void addAttributeToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 linenumber);
 static float4 calculateRandomSampleAverage(float4 *quantities, int count);
 
 
@@ -145,7 +145,7 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_pa
 }
 
 
-static void addQuantityToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 linenumber) {
+static void addAttributeToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 linenumber) {
     if (group->count >= group->capacity) {
         
         group->capacity *= 2;
