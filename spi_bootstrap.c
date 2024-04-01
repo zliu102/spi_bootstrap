@@ -273,9 +273,9 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         int extendedprice = atoi(value6);
         //double discount = strtod(value7, NULL);
         int linenumber = atoi(value8);
-        //elog(INFO, "l_suppkey is %d",atoi(value1));
-        //elog(INFO, "l_linenumber is %d",atoi(value2));
-      
+        elog(INFO, "l_suppkey is %s",value1);
+        elog(INFO, "l_partkey is %s",value2);
+        
         int groupIndex = findOrCreateGroup(&groupsContext, value1, value2);
         if (groupIndex != -1) { 
             addAttributeToGroup(&groupsContext.groups[groupIndex],quantity,orderkey,extendedprice,linenumber);
