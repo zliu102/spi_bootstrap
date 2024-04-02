@@ -60,13 +60,13 @@
 #include "access/printtup.h"
 //#include "/home/oracle/datasets/postgres11ps/postgres-pbds/contrib/intarray/_int.h"
 #define MAX_QUANTITIES 10 
-#define MAX_GROUPS 110000
+#define MAX_GROUPS 90000
 #define RESAMPLE_TIMES 50
 PG_MODULE_MAGIC;
 
 typedef struct {
     char* l_suppkey; 
-    char* l_discount; 
+    char* l_tax; 
     float4 *quantities;
     float4 *orderkeys;
     float4 *extendedprices;
@@ -85,7 +85,7 @@ typedef struct {
 
 // Utility function declarations
 static void prepTuplestoreResult(FunctionCallInfo fcinfo);
-static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_discount);
+static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_tax);
 static void addAttributeToGroup(MyGroup *group, float4 quantity, float4 orderkey, float4 extendedprice,float4 partkey, float4 linenumber);
 static float4 calculateRandomSampleAverage(float4 *quantities, int count);
 
@@ -113,10 +113,10 @@ prepTuplestoreResult(FunctionCallInfo fcinfo)
     rsinfo->setDesc = NULL;
 }
 
-static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_discount) {
+static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_tax) {
  
     static char* last_l_suppkey = NULL; 
-    static char* last_l_discount = NULL;
+    static char* last_l_tax = NULL;
     static int last_groupIndex = -1;
     //elog(INFO, "last_l_suppkey is %s",last_l_suppkey);
     //elog(INFO, "last_l_partkey is %s",last_l_partkey);
@@ -125,7 +125,7 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_di
 
     // 检查上一个值是否相同（这里使用 strcmp 比较字符串）
     if ((last_l_suppkey != NULL && strcmp(l_suppkey, last_l_suppkey) == 0) &&
-        (last_l_discount != NULL && strcmp(l_discount, last_l_discount) == 0)) {
+        (last_l_tax != NULL && strcmp(l_tax, last_l_tax) == 0)) {
         //elog(INFO, "lzy same");
         return last_groupIndex;
     }
@@ -141,7 +141,7 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_di
 
     MyGroup *newGroup = &context->groups[newIndex];
     newGroup->l_suppkey = strdup(l_suppkey);
-    newGroup->l_discount = strdup(l_discount);
+    newGroup->l_tax = strdup(l_tax);
     newGroup->quantities = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
     newGroup->orderkeys = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
     newGroup->extendedprices = (float4 *) palloc(sizeof(float4) * MAX_QUANTITIES); 
@@ -151,7 +151,7 @@ static int findOrCreateGroup(GroupsContext *context, char* l_suppkey, char* l_di
     newGroup->capacity = MAX_QUANTITIES;
 
     last_l_suppkey = l_suppkey;
-    last_l_discount = l_discount;
+    last_l_tax = l_tax;
     last_groupIndex = newIndex;
 
     context->numGroups++;
@@ -232,7 +232,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
     // Prepare for tuplestore use
     tupdesc = CreateTemplateTupleDesc(7, false);
     TupleDescInitEntry(tupdesc, (AttrNumber) 1, "l_suppkey", INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_discount", NUMERICOID, -1, 0);
+    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "l_tax", NUMERICOID, -1, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_quantity", FLOAT4OID, -1, 0);
     //TupleDescInitEntry(tupdesc, (AttrNumber) 4, "std_l_quantity", FLOAT4OID, -1, 0);
     //TupleDescInitEntry(tupdesc, (AttrNumber) 3, "avg_l_partkey", FLOAT4OID, -1, 0);
@@ -262,7 +262,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //elog(INFO, "SPI current id is -- %d", i);
 
         int attnum1 = SPI_fnumber(SPI_tuptable->tupdesc, "l_suppkey");
-        int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_discount");
+        int attnum2 = SPI_fnumber(SPI_tuptable->tupdesc, "l_tax");
         int attnum3 = SPI_fnumber(SPI_tuptable->tupdesc, "l_quantity");
         //int attnum4 = SPI_fnumber(SPI_tuptable->tupdesc, "l_partkey");
         int attnum5 = SPI_fnumber(SPI_tuptable->tupdesc, "l_orderkey");
@@ -334,7 +334,7 @@ Datum spi_bootstrap2(PG_FUNCTION_ARGS) {
         //values[0] = Int32GetDatum(group->l_suppkey);
         //values[1] = DirectFunctionCall1(float8_numeric, Float8GetDatum(group->l_tax));
         values[0] = Int32GetDatum(atoi(group->l_suppkey));
-        values[1] = DirectFunctionCall3(numeric_in, CStringGetDatum(group->l_discount), ObjectIdGetDatum(InvalidOid), Int32GetDatum(-1));
+        values[1] = DirectFunctionCall3(numeric_in, CStringGetDatum(group->l_tax), ObjectIdGetDatum(InvalidOid), Int32GetDatum(-1));
         //values[1] = Int32GetDatum(atoi(group->l_discount));
         values[2] = Float4GetDatum(avg_l_quantity);
         //values[3] = Float4GetDatum(stddev_l_quantity);
