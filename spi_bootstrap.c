@@ -59,7 +59,7 @@
 #include "miscadmin.h"
 #include "access/printtup.h"
 //#include "/home/oracle/datasets/postgres11ps/postgres-pbds/contrib/intarray/_int.h"
-#define MAX_QUANTITIES 20 
+#define MAX_QUANTITIES 30 
 #define MAX_GROUPS 90000
 #define RESAMPLE_TIMES 50
 PG_MODULE_MAGIC;
@@ -179,7 +179,7 @@ static void addAttributeToGroup(MyGroup *group, float4 quantity, float4 orderkey
 
 
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
-    int sampleSize = MAX_QUANTITIES*1000;
+    int sampleSize = MAX_QUANTITIES*100;
     float4 sum = 0;
     int i;
     for (i = 0; i < sampleSize; ++i) {
