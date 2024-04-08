@@ -179,7 +179,7 @@ static void addAttributeToGroup(MyGroup *group, float4 quantity, float4 orderkey
 
 
 static float4 calculateRandomSampleAverage(float4 *quantities, int count) {
-    int sampleSize = MAX_QUANTITIES*50;
+    int sampleSize = MAX_QUANTITIES*200;
     float4 sum = 0;
     int i;
     for (i = 0; i < sampleSize; ++i) {
